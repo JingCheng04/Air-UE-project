@@ -1,17 +1,15 @@
 # ROS 2 工作区
-coordination 包的节点、话题和三个协同 demo 详见：[coordination/README.md](src/coordination/README.md)。
+
+节点和三个协同 demo 详见 [`coordination/README.md`](src/coordination/README.md)。
 
 ## 主要依赖
 
-- ROS 2 Jazzy、`colcon`、MAVROS 和 PX4 SITL。
-- Cosys-AirSim UE 仿真环境。
-- Nav2/DWB、LiDAR 点云转换和 TF 相关 ROS 2 包。
-- 项目根目录的 Python 3.12 虚拟环境；其中需要 `cosysairsim`、`numpy`、`pynput` 等依赖。
-- `mpc_landing_demo` 和 `coordination_rtl_demo` 还需要 coni-mpc/ACADO；RTL demo 还需要 YOLOE 及其模型依赖。
+- Cosys-AirSim UE 仿真环境和 Blocks 工程。
+- ROS 2 Jazzy、`colcon`、MAVROS，以及 PX4 SITL。
 
 ## 构建
 
-先启动 PX4 和 UE。可以在项目根目录运行：
+启动前请将项目根目录的 `settings.json` 放置于 `~/Documents/AirSim/settings.json`，然后在项目根目录启动 PX4 SITL 和 Unreal Engine：
 
 ```bash
 cd ~/Air-UE-project
@@ -19,20 +17,17 @@ source .venv/bin/activate
 ./run_engine.sh
 ```
 
-`run_engine.sh` 会清理旧的 PX4 SITL，启动 `none_iris`，等待 TCP 4560，然后打开 Blocks UE 工程。UE 打开后需要进入关卡并点击 **Play**。脚本内的 PX4、Unreal Engine 和工程路径按当前机器配置，换机器前需要检查。
-
-在另一个终端构建 ROS 2 工作区：
+另开终端构建并加载 ROS 2 工作区：
 
 ```bash
-cd ~/Air-UE-project
-source .venv/bin/activate
+cd ~/Air-UE-project/src/ros2
+source ../../.venv/bin/activate
 source /opt/ros/jazzy/setup.bash
-cd src/ros2
 colcon build --symlink-install
 source install/setup.bash
 ```
 
-构建和运行 ROS 2 Python 节点前必须激活 `.venv`，否则节点可能找不到 `cosysairsim`。
+构建和运行 ROS 2 Python 节点前必须激活 `.venv`。
 
 ## Wrapper 运行
 
@@ -63,27 +58,9 @@ source install/setup.bash
 ./check_drone_topics.sh
 ```
 
-## 键盘控制
-
-这些脚本直接通过 Cosys-AirSim Python API 控制车辆，不需要 ROS 2 wrapper。
-
-```bash
-source ~/Air-UE-project/.venv/bin/activate
-
-# 无人机：先使用 Multirotor settings 并让 UE 进入 Play
-python3 ~/Air-UE-project/src/test/drone/keyboard_drone.py
-
-# AGV：先使用 SkidVehicle settings 并让 UE 进入 Play
-python3 ~/Air-UE-project/src/test/agv/keyboard_agv.py
-```
-
-`keyboard_drone.py`：`T/L` 起飞/降落，`M/N` 解锁/锁桨，`H` 悬停，`R` 重置，`Esc` 退出；`W/S/A/D` 平移，`Space/Shift` 升降，`Q/E` 偏航。
-
-`keyboard_agv.py`：`W/S` 前进/后退，`A/D` 转向，`Q/E` 原地旋转，`Space` 手刹，`R` 重置，`Esc` 退出。AGV 停止时要使用刹车或手刹。
-
 ## 协同 Demo
 
-以下命令均在已构建并 source 工作区的终端执行；三个 demo 不应同时控制同一架 UAV。
+以下命令均在已构建并加载工作区的终端执行，三个 demo 不能同时使用。
 
 ### 基础协同和避障
 
@@ -92,7 +69,7 @@ ros2 launch coordination coordination_demo.launch.py \
   object:=BP_HuskyVisual_C_1
 ```
 
-启动 UAV wrapper、运动学 AGV、UAV 状态机、Nav2/DWB、点云转 LaserScan 和基础协调节点，执行 AGV 先行、UAV 起飞、导航、避障和降落流程。
+执行无人机起飞、导航、避障和降落流程。
 
 ### MPC 降落
 
@@ -101,7 +78,7 @@ ros2 launch coordination mpc_landing_demo.launch.py \
   object:=BP_HuskyVisual_C_1
 ```
 
-在 AGV 追踪流程上加入 coni-mpc、姿态桥接和 MPC 降落协调器，使 UAV 接近并悬停后由 MPC 接管降落。
+使用 CoNi-MPC 跟踪无人车并完成动态降落。
 
 ### 返航和视觉降落
 
@@ -110,9 +87,9 @@ ros2 launch coordination coordination_rtl_demo.launch.py \
   object:=BP_HuskyVisual_C_1
 ```
 
-启动 AGV 巡航、UAV 状态机、Nav2、YOLOE、MPC 和 UAV/AGV follow 节点，执行去程、返航、视觉接近和降落流程。
+执行去程、返航、YOLOE-26 视觉接近和 CoNi-MPC 动态降落流程。
 
-`object` 必须是 UE World Outliner 中实际存在的 AGV actor 名称；默认`BP_HuskyVisual_C_1`。
+`object` 必须是 UE World Outliner 中实际存在的 AGV actor 名称，默认为 `BP_HuskyVisual_C_1`。
 
 ## 主要话题
 
