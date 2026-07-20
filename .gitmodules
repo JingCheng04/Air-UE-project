@@ -1,0 +1,6 @@
+[submodule "src/ros2/src/coni-mpc"]
+	path = src/ros2/src/coni-mpc
+	url = https://github.com/JingCheng04/coni-mpc
+[submodule "src/ros2/src/pointcloud_to_laserscan"]
+	path = src/ros2/src/pointcloud_to_laserscan
+	url = https://github.com/ros-perception/pointcloud_to_laserscan.git

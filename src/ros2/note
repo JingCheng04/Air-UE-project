@@ -1,0 +1,2 @@
+进入python虚拟环境后
+colcon build  --symlink-install

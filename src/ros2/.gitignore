@@ -1,0 +1,6 @@
+install/
+build/
+log/
+*.ts
+*.pt
+.cache/

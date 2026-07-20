@@ -1,0 +1,141 @@
+{
+  "SettingsVersion": 2.0,
+  "SimMode": "Multirotor",
+  "ClockType": "SteppableClock",
+  "ClockSpeed": 1.0,
+  "ViewMode": "FlyWithMe",
+  "OriginGeopoint": {
+    "Latitude": 45.72060377096292,
+    "Longitude": -123.93305245338378,
+    "Altitude": 0.0
+  },
+
+  "Vehicles": {
+    "UAV_1": {
+      "VehicleType": "PX4Multirotor",
+      "AutoCreate": true,
+      "EnableCollisions": true,
+      "AllowAPIAlways": true,
+      "UseSerial": false,
+      "LockStep": true,
+      "UseTcp": true,
+      "TcpPort": 4560,
+      "ControlPortLocal": 14540,
+      "ControlPortRemote": 14580,
+      "LocalHostIp": "127.0.0.1",
+      "Parameters": {
+        "NAV_RCL_ACT": 0,
+        "NAV_DLL_ACT": 0,
+        "COM_OBL_ACT": 1,
+        "LPE_LAT": 45.72060377096292,
+        "LPE_LON": -123.93305245338378
+      },
+      "X": 0, "Y": 0, "Z": 0,
+      "Pitch": 0, "Roll": 0, "Yaw": 0,
+
+      "Cameras": {
+        "front_center": {
+          "X": 0.50, "Y": 0.0, "Z": -0.10,
+          "Pitch": -45, "Roll": 0, "Yaw": 0,
+          "CaptureSettings": [
+            {
+              "ImageType": 0,
+              "Width": 640,
+              "Height": 480,
+              "FOV_Degrees": 90,
+              "TargetGamma": 2.2,
+              "ProjectionMode": "Perspective",
+              "AutoExposureMethod": 1,
+              "AutoExposureSpeedUp": 10.0,
+              "AutoExposureSpeedDown": 1.0,
+              "MotionBlurAmount": 0.0
+            },
+            {
+              "ImageType": 2,
+              "Width": 640,
+              "Height": 480,
+              "FOV_Degrees": 90,
+              "PixelsAsFloat": true,
+              "ProjectionMode": "Perspective"
+            }
+          ],
+          "NoiseSettings": [
+            {
+              "ImageType": 0,
+              "Enabled": false,
+              "LensDistortionEnable": false,
+              "LensDistortionIntensity": 0.0
+            }
+          ]
+        },
+        "downward_center": {
+          "X": 0.0, "Y": 0.0, "Z": 0.05,
+          "Pitch": -90, "Roll": 0, "Yaw": 0,
+          "CaptureSettings": [
+            {
+              "ImageType": 0,
+              "Width": 640,
+              "Height": 480,
+              "FOV_Degrees": 90,
+              "TargetGamma": 2.2,
+              "ProjectionMode": "Perspective",
+              "AutoExposureMethod": 1,
+              "MotionBlurAmount": 0.0
+            }
+          ]
+        }
+      },
+
+      "Sensors": {
+        "UAV_1_Imu": {
+          "SensorType": 2,
+          "Enabled": true,
+          "GenerateNoise": false
+        },
+        "UAV_1_Gps": {
+          "SensorType": 3,
+          "Enabled": true,
+          "UpdateLatency": 0.2,
+          "UpdateFrequency": 50,
+          "StartupDelay": 1
+        },
+        "UAV_1_Magnetometer": {
+          "SensorType": 4,
+          "Enabled": true,
+          "UpdateFrequency": 10
+        },
+        "UAV_1_Barometer": {
+          "SensorType": 1,
+          "Enabled": true,
+          "UpdateFrequency": 10,
+          "PressureFactorSigma": 0.0001825
+        },
+        "UAV_1_DownDistance": {
+          "SensorType": 5,
+          "Enabled": true,
+          "MinDistance": 0.2,
+          "MaxDistance": 50,
+          "X": 0.0, "Y": 0.0, "Z": 0.0,
+          "Yaw": 0, "Pitch": -90, "Roll": 0,
+          "DrawDebugPoints": true
+        },
+        "UAV_1_Lidar1": {
+          "SensorType": 6,
+          "Enabled": true,
+          "NumberOfChannels": 16,
+          "Range": 50,
+          "RotationsPerSecond": 10,
+          "MeasurementsPerCycle": 512,
+          "X": 0.0, "Y": 0.0, "Z": -0.15,
+          "Roll": 0, "Pitch": 0, "Yaw": 0,
+          "VerticalFOVUpper": 10,
+          "VerticalFOVLower": -25,
+          "HorizontalFOVStart": -180,
+          "HorizontalFOVEnd": 180,
+          "DrawDebugPoints": true,
+          "GenerateNoise": false
+        }
+      }
+    }
+  }
+}

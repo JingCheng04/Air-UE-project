@@ -1,0 +1,24 @@
+# Python 依赖 (项目唯一 venv: ~/Air-UE-project/.venv)
+#
+# 安装方式:
+#   source ~/Air-UE-project/.venv/bin/activate
+#   uv pip install -r ~/Air-UE-project/src/requirements.txt
+#
+# 说明:
+# - 这里不仅包含 Cosys-AirSim Python 客户端依赖, 还包含 ROS2 在 venv 中
+#   构建/运行 ament_python 包时需要的 Python 工具链.
+# - ROS2 官方文档允许在 venv 中运行, 但明确要求 venv 必须基于系统解释器
+#   (你当前就是 /usr/bin/python3.12, 这一点没问题).
+
+cosysairsim>=2.0.0
+msgpack-rpc-python>=0.4.1
+# msgpack-rpc-python 的传递依赖 tornado 4.x 在 Python 3.10+ 缺这个包
+backports.ssl_match_hostname
+
+# ROS2 / colcon / rosidl 在 venv 里构建 Python/接口包时依赖这些包.
+# empy 必须锁到 3.3.4, 4.x 会让 rosidl_generator_* 在模板展开时报错.
+empy==3.3.4
+lark>=1.1.0
+catkin_pkg>=0.5
+pyyaml>=5.4
+numpy>=1.21

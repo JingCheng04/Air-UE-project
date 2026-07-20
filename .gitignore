@@ -1,0 +1,9 @@
+Unreal/
+build/
+log/
+install/
+*.xz
+*.7z
+.venv/
+*.mkv
+

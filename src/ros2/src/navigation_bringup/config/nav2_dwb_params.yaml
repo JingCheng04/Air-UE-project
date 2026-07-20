@@ -1,0 +1,164 @@
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    odom_topic: /uav/airsim_node/UAV_1/odom_relay
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      # Tight progress check: if the UAV has not moved 0.3m in 4s it is
+      # considered stuck and the FollowPath action aborts. The aborted
+      # action prompts dwb_goal_path_node to issue a fresh goal, which
+      # gives DWB a chance to break out of "frozen at concave corner"
+      # states. The APF time-penalty term keeps growing while we cycle
+      # through these aborts, so the auxiliary push gets a chance to
+      # nudge the UAV out.
+      required_movement_radius: 0.3
+      movement_time_allowance: 4.0
+
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+      stateful: true
+
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: true
+      # Wider, faster lateral motion so DWB can sidestep large crowns and
+      # squeeze through narrow corridors instead of crawling. Cruise at 3 m/s
+      # so the UAV does not feel hesitant; deceleration is tuned to brake from
+      # 3 m/s within ~1.5m, which fits the 6m AVOID trigger comfortably.
+      # DWB max velocity is intentionally LOWER than the cruise term in
+      # ugv_then_uav_node (cruise=3.5 m/s) because DWB only runs while
+      # AVOID is active, where it is more important to have time to
+      # deflect than to maintain cruise speed. With max_vel=2.5 the
+      # braking distance from full DWB speed is 2.5^2/(2*5)=0.625m, so a
+      # 4m inflation halo gives DWB ~3m of cost gradient to react in.
+      #
+      # min_vel_x is small but non-zero (-1.0 m/s). Pure forward-only
+      # (-0.3) caused DWB to reject all 1037 candidate trajectories in
+      # concave-wall pockets ("No valid trajectories"), and the UAV
+      # hovered while APF tried to push out alone. Allowing modest
+      # retreat (1.0 m/s) gives DWB a small valid escape set without
+      # making "pure backward" the cheapest solution that the original
+      # -2.5 limit produced. min_vel_y stays full so lateral evasion
+      # remains unrestricted.
+      min_vel_x: -1.0
+      max_vel_x: 2.5
+      min_vel_y: -2.5
+      max_vel_y: 2.5
+      max_vel_theta: 0.2
+      acc_lim_x: 3.0
+      acc_lim_y: 3.0
+      acc_lim_theta: 0.5
+      decel_lim_x: -5.0
+      decel_lim_y: -5.0
+      decel_lim_theta: -1.0
+      max_speed_xy: 2.5
+      min_speed_xy: 0.0
+      min_speed_theta: 0.0
+      vx_samples: 21
+      vy_samples: 21
+      vtheta_samples: 3
+      # Look 2.5s ahead so a 3 m/s cruise rolls 7.5m forward in the
+      # trajectory rollout. That is well past the inflation halo, which
+      # forces DWB to reject "straight ahead" trajectories long before
+      # they reach the wall. Combined with the new high deceleration
+      # limit (-5 m/s^2) this means DWB can both see the wall coming and
+      # still have braking authority to avoid it.
+      sim_time: 2.5
+      linear_granularity: 0.05
+      angular_granularity: 0.05
+      transform_tolerance: 0.5
+      xy_goal_tolerance: 0.25
+      critics: ["BaseObstacle", "PathDist", "GoalDist", "Oscillation"]
+      # Goal/path bias is essentially zero (0.001). DWB is now an obstacle-
+      # only critic; the cruise term in ugv_then_uav_node provides the
+      # global heading and is gated off the moment AVOID engages, so DWB
+      # only sees obstacles. BaseObstacle bumped to 400 so even small
+      # inflation-layer costs (a few 10s) become decisive after weighting,
+      # killing trajectories that graze side walls in DWB's selection.
+      BaseObstacle.scale: 4000.0
+      # 绕过大型障碍物时使用
+      # PathDist.scale: 0.001
+      # GoalDist.scale: 0.01
+
+      PathDist.scale: 0.001
+      GoalDist.scale: 0.01
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: false
+      # DWB plans purely in the UAV body frame so it does not depend on the
+      # AirSim non-standard odom frame ("UAV_1/odom_local"). The body-frame
+      # rolling-window costmap is fully self-contained.
+      global_frame: UAV_1
+      robot_base_frame: UAV_1
+      rolling_window: true
+      # Larger map and earlier reaction so DWB can plan a real sidestep around
+      # a building instead of grazing it.
+      width: 30
+      height: 30
+      resolution: 0.1
+      # Costmap robot_radius shifts the inflation cost curve right.
+      # Real envelope is ~0.6m from the in-flight LiDAR extents probe;
+      # using 1.0 in the costmap pushes effective lethal distance out
+      # to ~1m, making any cell within 2.5m of an obstacle have a
+      # decisively high cost in DWB's evaluation while still leaving
+      # 4m+ corridors usable.
+      robot_radius: 1.0
+      update_frequency: 10.0
+      publish_frequency: 5.0
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /uav/scan
+          # Allow tall obstacles like buildings/palms to keep their points in
+          # the costmap when cruising at 20 m AGL.
+          max_obstacle_height: 30.0
+          # Wider sensor reach: see and react to obstacles much earlier.
+          obstacle_max_range: 28.0
+          raytrace_max_range: 32.0
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        # 4.0m halo with very steep falloff (cost_scaling_factor=7.0).
+        # Steeper than 5.0 so cost is concentrated in the last 1.5m
+        # before lethal cells: cost(1.5m)=73, cost(1m)=253 (lethal),
+        # while at 3-4m cost is essentially 0 (the UAV is free to
+        # approach). This treats wall avoidance as DWB's job (with a
+        # near-binary cost wall at 1m), reserving the APF for stuck
+        # escape rather than active avoidance.
+        inflation_radius: 4.0
+        cost_scaling_factor: 7.0
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: false
+      global_frame: map
+      robot_base_frame: UAV_1
+      resolution: 0.1
+      robot_radius: 0.25
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      plugins: ["static_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.7
+        cost_scaling_factor: 3.0
