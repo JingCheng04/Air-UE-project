@@ -1,7 +1,7 @@
 # Air-UE-project
 
 基于 [Cosys-AirSim](https://cosys-lab.github.io/Cosys-AirSim/) 的无人车-无人机空地协同轨迹规划与仿真系统。
-
+<br>
 ROS 2 相关内容见 [`src/ros2/README.md`](src/ros2/README.md)，节点、话题和 demo 说明见 [`coordination/README.md`](src/ros2/src/coordination/README.md)。
 
 ## 技术方案
@@ -100,3 +100,6 @@ ros2 launch coordination coordination_rtl_demo.launch.py
     <td align="center">YOLOE-26 对目标进行开放词汇识别。</td>
   </tr>
 </table>
+
+## 说明
+部分代码来源或借鉴于第三方仓库例如Cosys-Airsim、CoNi-MPC等,版权属于原作者。
